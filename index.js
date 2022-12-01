@@ -103,6 +103,81 @@ async function run() {
             res.json({ success: true, restaurant: result });
         });
 
+        // Get All Restaurants Info
+        app.get("/restaurants", async (req, res) => {
+            const query = { applicationStatus: "pending" };
+            const totalRestaurants = await restaurantCollection.find(query).toArray();
+
+            res.json(totalRestaurants);
+        });
+
+        // Approve vendor role//admin role entry update
+        app.patch("/restaurant/:email", async (req, res) => {
+            const email = req.params.email;
+            const restaurantId = req.body.restaurantId;
+            // const userAccount = await restaurantCollection.findOne({
+            //     email: email,
+            // });
+            // if (userAccount) {
+            //     const filter = { email: email };
+            //     const updateDoc = {
+            //         $set: {
+            //             role: "vendor",
+            //             applicationStatus: "approved",
+            //             restaurant_id: restaurantId,
+            //         },
+            //     };
+            //     const result = await restaurantCollection.updateOne(filter, updateDoc);
+
+            //     res.send(result);
+            // } 
+            // else {
+            //     res.status(403).send({ message: "Forbidden 403" });
+            // }
+
+            const filter = { email: email };
+            const updateDoc = {
+                $set: {
+                    role: "vendor",
+                    applicationStatus: "approved",
+                    restaurant_id: restaurantId,
+                },
+            };
+            const result = await restaurantCollection.updateOne(filter, updateDoc);
+
+        });
+
+
+
+        // Get All approved Restaurants Info
+        app.get("/restaurants/vendor", async (req, res) => {
+            const query = { applicationStatus: "approved" };
+            const totalRestaurants = await restaurantCollection.find(query).toArray();
+
+            res.json(totalRestaurants);
+        });
+
+        //Remove vendor role//admin role entry update
+        app.delete("/restaurant/vendor/:email", async (req, res) => {
+            const email = req.params.email;
+
+            const userAccount = await restaurantCollection.findOne({
+                email: email,
+            });
+            if (userAccount) {
+                const filter = { email: email };
+                const updateDoc = {
+                    $unset: { role: "vendor" },
+                    $set: { applicationStatus: "pending" },
+                };
+                const result = await restaurantCollection.updateOne(filter, updateDoc);
+
+                res.send(result);
+            } else {
+                res.status(403).send({ message: "Forbidden 403" });
+            }
+        });
+
 
     }
 

@@ -35,6 +35,7 @@ async function run() {
         .............Starting to Create/Put  (users) section........
         ..........................................................*/
         // Put/Create .....(users)
+        // (useToken.js).....
         app.put("/users/:email", async (req, res) => {
             const email = req.params.email;
             const user = req.body;
@@ -53,6 +54,7 @@ async function run() {
         });
 
         // Get/Read (allUsers)....
+        // (AllUsers.js)........
         app.get("/allUsers", async (req, res) => {
             const totalUsers = await usersCollection.find().toArray();
             res.send(totalUsers);
@@ -64,6 +66,7 @@ async function run() {
         .............(ADMIN ) section  Start........
         ..........................................................*/
         // Create .... (ADMIN)
+        // (UsersRow.js).........
         app.put("/users/admin/:email", async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
@@ -76,6 +79,7 @@ async function run() {
         });
 
         // Delete (user)
+        // (UsersRow.js).........
         app.delete("/deleteUsers/:id", async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -86,7 +90,8 @@ async function run() {
         /*...........(ADMIN)....SEction (END)..........*/
 
 
-        // Create New Restaurants
+        // Create New (Restaurants/Merchants)
+        // (Merchant.js)......
         app.put("/restaurant/:email", async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
@@ -104,6 +109,7 @@ async function run() {
         });
 
         // Get All Restaurants Info
+        // (MakeVendor.js)......
         app.get("/restaurants", async (req, res) => {
             const query = { applicationStatus: "pending" };
             const totalRestaurants = await restaurantCollection.find(query).toArray();
@@ -111,7 +117,8 @@ async function run() {
             res.json(totalRestaurants);
         });
 
-        // Approve vendor role//admin role entry update
+        // Approve vendor role//admin role entry update//
+        // (MakeVendor.js).....
         app.patch("/restaurant/:email", async (req, res) => {
             const email = req.params.email;
             const restaurantId = req.body.restaurantId;
@@ -147,9 +154,19 @@ async function run() {
 
         });
 
+        // Get Own Restaurants Info
+        // (Merchant.js)......
+        app.get("/restaurant", async (req, res) => {
+            const restaurantId = req.query.restaurantId;
+            const query = { email: restaurantId };
+            const restaurant = await restaurantCollection.findOne(query);
+            res.json(restaurant);
+        });
+
 
 
         // Get All approved Restaurants Info
+        // (AllVendors.js)........
         app.get("/restaurants/vendor", async (req, res) => {
             const query = { applicationStatus: "approved" };
             const totalRestaurants = await restaurantCollection.find(query).toArray();
@@ -158,6 +175,7 @@ async function run() {
         });
 
         //Remove vendor role//admin role entry update
+        // (AllVendors.js)........
         app.delete("/restaurant/vendor/:email", async (req, res) => {
             const email = req.params.email;
 
@@ -176,6 +194,22 @@ async function run() {
             } else {
                 res.status(403).send({ message: "Forbidden 403" });
             }
+        });
+
+        // for super admin(useAdmin)....
+        app.get("/admin/:email", async (req, res) => {
+            const email = req.params.email;
+            const user = await usersCollection.findOne({ email: email });
+            const isAdmin = user?.role === "admin";
+            res.send({ admin: isAdmin });
+        });
+
+        //for admins (useVendor)
+        app.get("/vendor/:email", async (req, res) => {
+            const email = req.params.email;
+            const user = await restaurantCollection.findOne({ email: email });
+            const isAdmin = user?.role === "vendor";
+            res.send({ vendorAdmin: isAdmin });
         });
 
 

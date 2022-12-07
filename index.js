@@ -30,6 +30,8 @@ async function run() {
         const usersCollection = client.db("all_users").collection("users");
 
         const restaurantCollection = client.db("restaurants_db").collection("restaurants");
+        const mealCollection = client.db("restaurants_db").collection("meals");
+        const categoryCollection = client.db("restaurants_db").collection("category");
 
         /* .........................................................
         .............Starting to Create/Put  (users) section........
@@ -53,7 +55,7 @@ async function run() {
             res.send(result);
         });
 
-        // Get/Read (allUsers)....
+        // Get/Read (allUsers)....for (Deleting users & Making Admin )
         // (AllUsers.js)........
         app.get("/allUsers", async (req, res) => {
             const totalUsers = await usersCollection.find().toArray();
@@ -61,10 +63,10 @@ async function run() {
         });
 
 
-
         /* .........................................................
         .............(ADMIN ) section  Start........
         ..........................................................*/
+
         // Create .... (ADMIN)
         // (UsersRow.js).........
         app.put("/users/admin/:email", async (req, res) => {
@@ -87,7 +89,9 @@ async function run() {
             res.send(result);
         });
 
-        /*...........(ADMIN)....SEction (END)..........*/
+        /*...........(ADMIN)....SEction (END)..........
+        ...............................................
+        ..............................................*/
 
 
         // Create New (Restaurants/Merchants)
@@ -156,6 +160,7 @@ async function run() {
 
         // Get Own Restaurants Info
         // (Merchant.js)......
+        // (AddMenu.js).......
         app.get("/restaurant", async (req, res) => {
             const restaurantId = req.query.restaurantId;
             const query = { email: restaurantId };
@@ -213,7 +218,72 @@ async function run() {
         });
 
 
+
+        /*............. Mnus Section (START).........
+        .................................................*/
+
+        // REstaurat Owner//Vendor (add menu items)
+        // (AddMenu.js)..........
+        app.post("/meal", async (req, res) => {
+            const data = req.body;
+            const result = await mealCollection.insertOne(data);
+            res.send({ success: true, meal: result });
+        });
+
+        // Restaurant Ownwr/Vendor Add Category
+        // (AddMenu.js)..........
+        app.post("/category", async (req, res) => {
+            const data = req.body;
+            const result = await categoryCollection.insertOne(data);
+            res.send({ success: true, category: result });
+        });
+
+        // Get/Read all Categories..
+        // (AddMenu.js)..........
+        app.get("/category", async (req, res) => {
+            const query = {};
+            const cursor = categoryCollection.find(query);
+            const category = await cursor.toArray();
+            res.send(category);
+        });
+
+        /*............. Mnus Section (END).........
+        .................................................*/
+
+
+
+
+
+
+
+        /*.......... DELETE (MENU) section Start.................*/
+
+        // Get specific (menu Items)
+
+        // (ManageItems.js........)
+        app.get("/menus/:email", async (req, res) => {
+            const email = req.params.email
+            const query = { "restaurantInfo.email": email }
+            const cursor = mealCollection.find(query);
+            const menus = await cursor.toArray();
+            res.send(menus)
+        });
+
+        // Delete (Menus)
+        // (ManageItems.js........)
+        app.delete("/deleteMenus/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await mealCollection.deleteOne(query);
+            res.send(result);
+        });
+
+        /*.......... DELETE (MENU) section End.................*/
+
+
     }
+
+
 
     finally {
         // await client.close()

@@ -172,6 +172,7 @@ async function run() {
 
         // Get All approved Restaurants Info
         // (AllVendors.js)........
+        // (VendorList.js)........
         app.get("/restaurants/vendor", async (req, res) => {
             const query = { applicationStatus: "approved" };
             const totalRestaurants = await restaurantCollection.find(query).toArray();
@@ -253,7 +254,20 @@ async function run() {
 
 
 
+        /*............. Specific (REstaurant) a (Click) korle tar sob
+        .............mood item/menu show korbe..............
+        ....................................................*/
 
+        // Get single partner vendors
+        app.get("/restaurants/vendor/:restaurantId", async (req, res) => {
+            const query = { restaurant_id: req.params.restaurantId };
+            const restaurant = await restaurantCollection.findOne(query);
+
+            res.send(restaurant);
+        });
+        /*............. ...................................
+        .............mood item/menu show korbe..............
+        ....................................................*/
 
 
         /*.......... DELETE (MENU) section Start.................*/

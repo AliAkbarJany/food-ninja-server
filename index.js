@@ -1,6 +1,6 @@
 const express = require('express')
 const cors = require('cors')
-// const { validateCartItems } = require("use-shopping-cart/utilities");
+const { validateCartItems } = require("use-shopping-cart/utilities");
 require('dotenv').config()
 const app = express()
 const port = process.env.PORT || 5000;

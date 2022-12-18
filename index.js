@@ -1,11 +1,14 @@
 const express = require('express')
 const cors = require('cors')
+// const { validateCartItems } = require("use-shopping-cart/utilities");
 require('dotenv').config()
 const app = express()
 const port = process.env.PORT || 5000;
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
+// STRIPE.......
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 /*  
 DB_USER=food_ninja_admin
@@ -265,8 +268,82 @@ async function run() {
 
             res.send(restaurant);
         });
+        //get unique restaurant menu
+        app.get("/menu/:restaurant_id", async (req, res) => {
+            const id = req.params.restaurant_id;
+            const query = {
+                // restaurantInfo: { restaurant_id: "149q8u2YvG5js7vSqJQzI" },
+                "restaurantInfo.restaurant_id": id,
+            };
+            const cursor = mealCollection.find(query);
+            const restaurantMenu = await mealCollection.distinct(
+                "category.label",
+                query
+            );
+            const menuItems = await cursor.toArray();
+
+            res.send({ items: menuItems, menu: restaurantMenu });
+        });
         /*............. ...................................
-        .............mood item/menu show korbe..............
+        ...........................
+        ....................................................*/
+
+
+        /*.............Stripe Section (START) ...................................
+        ..................................................
+        ....................................................*/
+        app.post("/checkout-sessions", async (req, res) => {
+            try {
+                const cartItems = req.body;
+                const cursor = mealCollection.find({});
+                const meal = await cursor.toArray();
+                // console.log(meal);
+                const line_items = validateCartItems(meal, cartItems);
+
+                const origin =
+                    process.env.NODE_ENV === "production"
+                        ? req.headers.origin
+                        : "http://localhost:3000";
+                // console.log(origin);
+                const params = {
+                    submit_type: "pay",
+                    payment_method_types: ["card"],
+                    billing_address_collection: "auto",
+                    shipping_address_collection: {
+                        allowed_countries: ["US", "CA", "BD"],
+                    },
+                    line_items,
+                    success_url: `${origin}/result?session_id={CHECKOUT_SESSION_ID}`,
+                    cancel_url: origin,
+                    mode: "payment",
+                };
+                const checkoutSession = await stripe.checkout.sessions.create(params);
+                res.status(200).json({ checkoutSession, cart: line_items });
+            } catch (error) {
+                res.status(500).json({ statusCode: 500, message: error.message });
+            }
+        });
+        //get checkout data
+        app.get("/checkout-sessions/:sessionId", async (req, res) => {
+            const { sessionId } = req.params;
+            try {
+                if (!sessionId.startsWith("cs_")) {
+                    throw Error("Incorrect session ID");
+                }
+                const checkout_session = await stripe.checkout.sessions.retrieve(
+                    sessionId,
+                    {
+                        expand: ["payment_intent"],
+                    }
+                );
+                res.status(200).json(checkout_session);
+            } catch (error) {
+                res.status(500).json({ statusCode: 500, message: error.message });
+            }
+        });
+
+        /*............. ...................................
+        ...........................Stripe Section (END).......
         ....................................................*/
 
 
